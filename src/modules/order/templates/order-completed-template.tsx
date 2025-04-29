@@ -33,13 +33,13 @@ export default async function OrderCompletedTemplate({
             level="h1"
             className="flex flex-col gap-y-3 text-ui-fg-base text-3xl mb-4"
           >
-            {`technician_id :${(order as any)?.technician?.technician_id}`}
+            {`technician_id :${(order as any)?.technician ? (order as any)?.technician?.technician_id : ""}`}
           </Heading>
           <Heading
             level="h1"
             className="flex flex-col gap-y-3 text-ui-fg-base text-3xl mb-4"
           >
-            {`tenant_id :${(order as any)?.technician?.tenant_id}`}
+            {`tenant_id :${(order as any)?.technician ? (order as any)?.technician?.tenant_id : ""}`}
           </Heading>
           <Heading
             level="h1"
