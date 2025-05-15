@@ -1,4 +1,4 @@
-import { retrieveOrder } from "@lib/data/orders"
+import { retrieveOrder, retrieveOrderMetadata } from "@lib/data/orders"
 import OrderCompletedTemplate from "@modules/order/templates/order-completed-template"
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
@@ -14,11 +14,11 @@ export const metadata: Metadata = {
 export default async function OrderConfirmedPage(props: Props) {
   const params = await props.params
   const order = await retrieveOrder(params.id).catch(() => null)
-
+  const orderMetadata = await retrieveOrderMetadata(params.id).catch(() => null)
 
   if (!order) {
     return notFound()
   }
 
-  return <OrderCompletedTemplate order={order} />
+  return <OrderCompletedTemplate order={order} orderMetadata={orderMetadata} />
 }

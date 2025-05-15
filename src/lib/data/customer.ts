@@ -259,3 +259,27 @@ export const updateCustomerAddress = async (
       return { success: false, error: err.toString() }
     })
 }
+
+export const getTimeSlots = async (
+  endTime: number,
+  startTime: number,
+  cartId: string
+): Promise<any> => {
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  return sdk.client
+    .fetch(`/store/nylas/avability?endTime=${endTime}&startTime=${startTime}&cartId=${cartId}`, {
+      headers,
+      method: "GET",
+    })
+    .then((res) => {
+      console.log("res", res)
+      return res
+    })
+    .catch((err) => {
+      console.error('Error fetching time slots:', err)
+      throw err
+    })
+}

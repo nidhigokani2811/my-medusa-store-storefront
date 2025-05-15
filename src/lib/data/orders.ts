@@ -19,13 +19,38 @@ export const retrieveOrder = async (id: string) => {
       method: "GET",
       query: {
         fields:
-          "*payment_collections.payments,*items,*items.metadata,*items.variant,*items.product,*technician",
+          "*technician,*payment_collections.payments,*items,*items.metadata,*items.variant,*items.product",
       },
       headers,
       next,
-      cache: "force-cache",
     })
-    .then(({ order }) => order)
+    .then(({ order }) => {
+      return order
+    })
+    .catch((err) => medusaError(err))
+}
+
+export const retrieveOrderMetadata = async (id: string) => {
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  const next = {
+    ...(await getCacheOptions("orders")),
+  }
+
+  return sdk.client
+    .fetch<HttpTypes.StoreOrderResponse>(`/store/orders/${id}`, {
+      method: "GET",
+      query: {
+        fields:
+          "metadata",
+      },
+      headers,
+    })
+    .then(({ order }) => {
+      return order
+    })
     .catch((err) => medusaError(err))
 }
 
