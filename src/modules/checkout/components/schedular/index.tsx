@@ -20,7 +20,7 @@ const Schedular: React.FC<SchedularProps> = ({
 }) => {
     const [error, setError] = useState<string | null>(null)
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-    const [selectedTime, setSelectedTime] = useState<{ start: string, end: string, time: string } | null>(null)
+    const [selectedTime, setSelectedTime] = useState<{ start: string, end: string, time: string, technicianEmail: string } | null>(null)
 
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -28,7 +28,7 @@ const Schedular: React.FC<SchedularProps> = ({
 
     const isOpen = searchParams.get("step") === "schedular"
 
-    const handleSelectionChange = (date: Date | null, time: { start: string, end: string, time: string } | null) => {
+    const handleSelectionChange = (date: Date | null, time: { start: string, end: string, time: string, technicianEmail: string } | null) => {
         setSelectedDate(date)
         setSelectedTime(time)
     }
@@ -39,6 +39,7 @@ const Schedular: React.FC<SchedularProps> = ({
                 metadata: {
                     startTime: selectedTime.start,
                     endTime: selectedTime.end,
+                    technicianEmail: selectedTime.technicianEmail
                 }
             })
             router.push(pathname + "?step=delivery", { scroll: false })
@@ -55,7 +56,8 @@ const Schedular: React.FC<SchedularProps> = ({
             setSelectedTime({
                 start: `${cart.metadata?.startTime}`,
                 end: `${cart.metadata?.endTime}`,
-                time: `${format(new Date(Number(cart.metadata?.startTime) * 1000), 'HH:mm')} - ${format(new Date(Number(cart.metadata?.endTime) * 1000), 'HH:mm')}`
+                time: `${format(new Date(Number(cart.metadata?.startTime) * 1000), 'HH:mm')} - ${format(new Date(Number(cart.metadata?.endTime) * 1000), 'HH:mm')}`,
+                technicianEmail: `${cart.metadata?.technicianEmail}`
             })
         }
         setError(null)

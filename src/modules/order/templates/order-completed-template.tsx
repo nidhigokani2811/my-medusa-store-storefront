@@ -20,6 +20,8 @@ export default async function OrderCompletedTemplate({
   order,
   orderMetadata,
 }: OrderCompletedTemplateProps) {
+  console.log("🚀 ~ orderMetadata:", orderMetadata)
+  console.log("🚀 ~ order:", order)
   const cookies = await nextCookies()
 
   const isOnboarding = cookies.get("_medusa_onboarding")?.value === "true"
