@@ -72,7 +72,7 @@ export default async function OrderCompletedTemplate({
                     </div>
                     <div>
                       <span className="font-semibold">Email:</span>{" "}
-                      <span className="text-ui-fg-subtle">{(order as any).technician.email}</span>
+                      <span className="text-ui-fg-subtle">{(orderMetadata as any).metadata?.technicianEmail}</span>
                     </div>
                     <div>
                       <span className="font-semibold">TimeSlot:</span>{" "}
@@ -81,17 +81,6 @@ export default async function OrderCompletedTemplate({
                         {" - "}
                         {format(new Date(Number((orderMetadata as any).metadata?.endTime) * 1000), "dd/MM/yyyy HH:mm")}
                       </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <Text className="txt-medium-plus text-ui-fg-base mb-2 font-semibold">
-                    Tenant Information
-                  </Text>
-                  <div className="space-y-1">
-                    <div>
-                      <span className="font-semibold">Tenant ID:</span>{" "}
-                      <span className="text-ui-fg-subtle">{(order as any).technician.tenant.id}</span>
                     </div>
                   </div>
                 </div>

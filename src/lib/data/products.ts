@@ -53,7 +53,7 @@ export const listProducts = async ({
     ...(await getCacheOptions("products")),
   }
 
-  return sdk.client
+  const response = await sdk.client
     .fetch<{ products: HttpTypes.StoreProduct[]; count: number }>(
       `/store/products`,
       {
@@ -71,7 +71,10 @@ export const listProducts = async ({
         cache: "force-cache",
       }
     )
-    .then(({ products, count }) => {
+    .then(({ products, count, ...rest }) => {
+      console.log("🚀 ~ .then ~ count:", count)
+      console.log("🚀 ~ .then ~ products:", products)
+      console.log("🚀 ~ .then ~ rest:", rest)
       const nextPage = count > offset + limit ? pageParam + 1 : null
 
       return {
@@ -83,6 +86,9 @@ export const listProducts = async ({
         queryParams,
       }
     })
+
+  console.log("🚀 ~ ProductPage ~ pricedProduct:", response)
+  return response;
 }
 
 /**

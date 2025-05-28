@@ -105,7 +105,7 @@ const Schedular: React.FC<SchedularProps> = ({
                         </div>
                         <div data-testid="delivery-options-container">
                             <div className="pb-8 md:pt-0 pt-2">
-                                <SchedularComponent onSelectionChange={handleSelectionChange} selectedTime={selectedTime} selectedDate={selectedDate} cartId={cart.id} />
+                                <SchedularComponent onSelectionChange={handleSelectionChange} selectedTime={selectedTime} selectedDate={selectedDate} cartId={cart.id} cart={cart} />
                             </div>
                         </div>
                     </div>

@@ -4,26 +4,49 @@ import { setAddresses } from "@lib/data/cart"
 import compareAddresses from "@lib/util/compare-addresses"
 import { CheckCircleSolid } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
-import { Heading, Text, useToggleState } from "@medusajs/ui"
+import { Heading, Text, useToggleState, Select } from "@medusajs/ui"
 import Divider from "@modules/common/components/divider"
 import Spinner from "@modules/common/icons/spinner"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useActionState } from "react"
+import { useEffect, useState } from "react"
 import BillingAddress from "../billing_address"
 import ErrorMessage from "../error-message"
 import ShippingAddress from "../shipping-address"
 import { SubmitButton } from "../submit-button"
 
+// Add Territory type
+type Territory = {
+  id: number
+  name: string
+  polygon: Array<{
+    id: string
+    lat: number
+    lng: number
+  }>
+  properties: {
+    name: string
+    color: string
+    borderColor: string
+  }
+}
+
 const Addresses = ({
   cart,
   customer,
+  territories,
 }: {
   cart: HttpTypes.StoreCart | null
   customer: HttpTypes.StoreCustomer | null
+  territories: Territory[]
 }) => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
+  const [selectedTerritory, setSelectedTerritory] = useState<string>("")
+
+  // Fetch territories on component mount
+
 
   const isOpen = searchParams.get("step") === "address"
 
@@ -64,6 +87,41 @@ const Addresses = ({
       {isOpen ? (
         <form action={formAction}>
           <div className="pb-8">
+            {/* Add Territory Select Dropdown */}
+            <div className="mb-4">
+              <Text className="txt-medium-plus text-ui-fg-base mb-1">
+                Select Territory
+              </Text>
+              <Select
+                value={selectedTerritory}
+                onValueChange={setSelectedTerritory}
+                data-testid="territory-select"
+              >
+                <Select.Trigger>
+                  <Select.Value placeholder="Select a territory" />
+                </Select.Trigger>
+                <Select.Content>
+                  {territories.map((territory) => (
+                    <Select.Item key={territory.id} value={territory.id.toString()}>
+                      {territory.name.charAt(0).toUpperCase() + territory.name.slice(1)}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select>
+            </div>
+
+            {/* Hidden fields for territory id and name */}
+            <input
+              type="hidden"
+              name="territory_id"
+              value={selectedTerritory}
+            />
+            <input
+              type="hidden"
+              name="territory_name"
+              value={territories.find(t => t.id.toString() === selectedTerritory)?.name || ""}
+            />
+
             <ShippingAddress
               customer={customer}
               checked={sameAsBilling}
@@ -116,6 +174,9 @@ const Addresses = ({
                     </Text>
                     <Text className="txt-medium text-ui-fg-subtle">
                       {cart.shipping_address.country_code?.toUpperCase()}
+                    </Text>
+                    <Text className="txt-medium text-ui-fg-subtle">
+                      {((cart.metadata?.territory_name as string).charAt(0).toUpperCase() + (cart.metadata?.territory_name as string).slice(1)) || "No territory selected"}
                     </Text>
                   </div>
 

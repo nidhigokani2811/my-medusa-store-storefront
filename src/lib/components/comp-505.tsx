@@ -8,6 +8,7 @@ import { Calendar } from "@lib/components/ui/calendar"
 import { ScrollArea } from "@lib/components/ui/scroll-area"
 import { cn } from "@lib/utils"
 import { getTimeSlots } from "@lib/data/customer"
+import { HttpTypes } from "@medusajs/types"
 
 type TimeSlot = {
   start_time: number
@@ -28,9 +29,10 @@ type SchedularComponentProps = {
   selectedTime?: { start: string, end: string, time: string, technicianEmail: string } | null
   selectedDate?: Date | null
   cartId?: string
+  cart: HttpTypes.StoreCart
 }
 
-export default function SchedularComponent({ onSelectionChange, selectedTime, selectedDate, cartId }: SchedularComponentProps) {
+export default function SchedularComponent({ onSelectionChange, selectedTime, selectedDate, cartId, cart }: SchedularComponentProps) {
   const today = new Date()
   const [date, setDate] = useState<Date>(selectedDate || today)
   const [time, setTime] = useState<{ start: string, end: string, time: string, technicianEmail: string } | null>(selectedTime || null)
@@ -51,7 +53,7 @@ export default function SchedularComponent({ onSelectionChange, selectedTime, se
         ? Math.max(startTime, currentTime + 3600) // 3600 seconds = 60 minutes
         : startTime
 
-      const response = await getTimeSlots(endTime, adjustedStartTime, cartId || "")
+      const response = await getTimeSlots(endTime, adjustedStartTime, cartId || "", cart)
 
       // Convert time slots to our format
       const formattedTimeSlots = (response as AvailabilityResponse).data.time_slots.map((slot: TimeSlot) => ({

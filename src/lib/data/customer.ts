@@ -263,23 +263,114 @@ export const updateCustomerAddress = async (
 export const getTimeSlots = async (
   endTime: number,
   startTime: number,
-  cartId: string
+  cartId: string,
+  cart: HttpTypes.StoreCart
 ): Promise<any> => {
   const headers = {
     ...(await getAuthHeaders()),
   }
 
-  return sdk.client
-    .fetch(`/store/nylas/avability?endTime=${endTime}&startTime=${startTime}&cartId=${cartId}`, {
-      headers,
-      method: "GET",
-    })
-    .then((res) => {
-      console.log("res", res)
-      return res
-    })
-    .catch((err) => {
-      console.error('Error fetching time slots:', err)
-      throw err
-    })
+  const territoryName = cart.metadata?.territory_name
+  const territoryId = cart.metadata?.territory_id
+
+  const configuration = await fetch(`${process.env.PAYLOAD_URL}/api/configurations?depth=3&where[territory.name][equals]=${territoryName}&where[territory.id][equals]=${territoryId}`,
+    {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `users API-Key ${process.env.PAYLOAD_TOKEN}`
+      }
+    }
+  )
+  const configurationData = await configuration.json();
+
+  const configId = configurationData.docs[0].configuration_id;
+  const grantId = configurationData.docs[0].tenant.grant_id
+  const nyalsConfig = await fetch(`${process.env.NYLAS_API_URL}/grants/${grantId}/scheduling/configurations/${configId}`,
+    {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${process.env.NYLAS_API_KEY}`
+      }
+    }
+  )
+  const nyalsConfigData = await nyalsConfig.json();
+
+  const participants = nyalsConfigData.data.participants
+  const transformed = transformParticipants(participants);
+
+  const durationMinutes = 60;
+
+  const response = await fetch(
+    `${process.env.NYLAS_API_URL}/calendars/availability`,
+    {
+      headers: {
+        'Authorization': `Bearer ${process.env.NYLAS_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      method: "POST",
+      body: JSON.stringify({
+        participants: [
+          ...transformed
+        ],
+        start_time: startTime,
+        end_time: endTime,
+        duration_minutes: durationMinutes,
+        availability_rules: {
+          availability_method: "max-availability",
+          buffer: {
+            before: 0,
+            after: 0
+          }
+        }
+      }),
+    }
+  );
+  const data = await response.json();
+
+  return data;
+
+}
+
+function transformParticipants(participants: any[]) {
+  console.dir(participants, { depth: null });
+  const transformed = participants.map((p) => {
+    if (!p.availability.hasOwnProperty("open_hours")) {
+      return null;
+    }
+
+    const { open_hours, ...availabilityRest } = p.availability || {};
+
+    //if open_hours is empty, return null
+    if (open_hours.length === 0 || open_hours === null) {
+      return null;
+    }
+
+    return {
+      booking: p.booking,
+      email: p.email,
+      name: p.name,
+      availability: {
+        ...availabilityRest,
+      },
+      open_hours: open_hours
+        ? open_hours.map(({ days, start, end, timezone }: { days: number[], start: string, end: string, timezone: string }) => ({
+          days,
+          start,
+          end,
+          timezone,
+        }))
+        : [],
+    };
+  });
+  return transformed.filter((p) => p !== undefined && p !== null);
+}
+
+export async function getTerritories() {
+  const response = await fetch(`${process.env.PAYLOAD_URL}/api/territory`, {
+    headers: {
+      'Authorization': `users API-Key ${process.env.PAYLOAD_API_KEY}`
+    }
+  })
+  const data = await response.json();
+  return data.docs;
 }
