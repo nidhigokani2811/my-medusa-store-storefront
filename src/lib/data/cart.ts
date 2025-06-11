@@ -378,6 +378,8 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
       ...data, metadata: {
         territory_id: formData.get("territory_id"),
         territory_name: formData.get("territory_name"),
+        latitude: formData.get("latitude"),
+        longitude: formData.get("longitude"),
       },
     })
   } catch (e: any) {

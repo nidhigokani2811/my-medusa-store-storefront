@@ -47,11 +47,11 @@ export default function SchedularComponent({ onSelectionChange, selectedTime, se
       const startTime = Math.floor(selectedDate.setHours(0, 0, 0, 0) / 1000)
       const endTime = startTime + 86400 // Add 24 hours in seconds
 
-      // If date is today, adjust startTime to be 60 minutes from now
+      // If date is today, adjust startTime to be 60 minutes from now and round to nearest 5 minutes
       const currentTime = Math.floor(Date.now() / 1000)
       const adjustedStartTime = selectedDate.toDateString() === new Date().toDateString()
-        ? Math.max(startTime, currentTime + 3600) // 3600 seconds = 60 minutes
-        : startTime
+        ? Math.ceil((Math.max(startTime, currentTime + 3600)) / 300) * 300 // Round up to nearest 5 minutes (300 seconds)
+        : Math.ceil(startTime / 300) * 300 // Round up to nearest 5 minutes (300 seconds)
 
       const response = await getTimeSlots(endTime, adjustedStartTime, cartId || "", cart)
 
@@ -108,9 +108,6 @@ export default function SchedularComponent({ onSelectionChange, selectedTime, se
             }}
             className="p-2 sm:pe-5"
             components={{}}
-            disabled={[
-              { before: today },
-            ]}
           />
           <div className="relative w-full max-sm:h-48 sm:w-40">
             <div className="absolute inset-0 py-4 max-sm:border-t">

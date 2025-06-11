@@ -266,6 +266,8 @@ export const getTimeSlots = async (
   cartId: string,
   cart: HttpTypes.StoreCart
 ): Promise<any> => {
+  console.log("🚀 ~ endTime:", endTime)
+  console.log("🚀 ~ startTime:", startTime)
   const headers = {
     ...(await getAuthHeaders()),
   }
@@ -326,6 +328,7 @@ export const getTimeSlots = async (
     }
   );
   const data = await response.json();
+  console.log("🚀 ~ data:", data)
 
   return data;
 
@@ -368,7 +371,7 @@ function transformParticipants(participants: any[]) {
 export async function getTerritories() {
   const response = await fetch(`${process.env.PAYLOAD_URL}/api/territory`, {
     headers: {
-      'Authorization': `users API-Key ${process.env.PAYLOAD_API_KEY}`
+      'Authorization': `users API-Key ${process.env.PAYLOAD_TOKEN}`
     }
   })
   const data = await response.json();

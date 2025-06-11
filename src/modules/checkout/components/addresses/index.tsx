@@ -176,8 +176,14 @@ const Addresses = ({
                       {cart.shipping_address.country_code?.toUpperCase()}
                     </Text>
                     <Text className="txt-medium text-ui-fg-subtle">
-                      {((cart?.metadata?.territory_name as string)
+                      {"Territory: " + ((cart?.metadata?.territory_name as string)
                         ?.charAt(0).toUpperCase() + (cart.metadata?.territory_name as string)?.slice(1)) || "No territory selected"}
+                    </Text>
+                    <Text className="txt-medium text-ui-fg-subtle">
+                      {"Latitude: " + (cart?.metadata?.latitude != null ? String(cart.metadata.latitude) : "No latitude")}
+                    </Text>
+                    <Text className="txt-medium text-ui-fg-subtle">
+                      {"Longitude: " + (cart?.metadata?.longitude != null ? String(cart.metadata.longitude) : "No longitude")}
                     </Text>
                   </div>
 
