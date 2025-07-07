@@ -353,6 +353,7 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
         country_code: formData.get("shipping_address.country_code"),
         province: formData.get("shipping_address.province"),
         phone: formData.get("shipping_address.phone"),
+
       },
       email: formData.get("email"),
     } as any
@@ -373,7 +374,14 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
         province: formData.get("billing_address.province"),
         phone: formData.get("billing_address.phone"),
       }
-    await updateCart(data)
+    await updateCart({
+      ...data, metadata: {
+        territory_id: formData.get("territory_id"),
+        territory_name: formData.get("territory_name"),
+        latitude: formData.get("latitude"),
+        longitude: formData.get("longitude"),
+      },
+    })
   } catch (e: any) {
     return e.message
   }

@@ -29,6 +29,8 @@ const ShippingAddress = ({
     "shipping_address.province": cart?.shipping_address?.province || "",
     "shipping_address.phone": cart?.shipping_address?.phone || "",
     email: cart?.email || "",
+    latitude: cart?.metadata?.latitude || "",
+    longitude: cart?.metadata?.longitude || "",
   })
 
   const countriesInRegion = useMemo(
@@ -61,6 +63,8 @@ const ShippingAddress = ({
         "shipping_address.country_code": address?.country_code || "",
         "shipping_address.province": address?.province || "",
         "shipping_address.phone": address?.phone || "",
+        latitude: cart?.metadata?.latitude || "",
+        longitude: cart?.metadata?.longitude || "",
       }))
 
     email &&
@@ -210,6 +214,29 @@ const ShippingAddress = ({
           value={formData["shipping_address.phone"]}
           onChange={handleChange}
           data-testid="shipping-phone-input"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <Input
+          label="latitude"
+          name="latitude"
+          type="number"
+          title="Enter a valid latitude."
+          autoComplete="latitude"
+          value={formData.latitude}
+          onChange={handleChange}
+          required
+          data-testid="shipping-latitude-input"
+        />
+        <Input
+          label="longitude"
+          name="longitude"
+          type="number"
+          title="Enter a valid longitude."
+          autoComplete="longitude"
+          value={formData.longitude}
+          onChange={handleChange}
+          data-testid="shipping-longitude-input"
         />
       </div>
     </>

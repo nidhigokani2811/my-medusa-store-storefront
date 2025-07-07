@@ -26,6 +26,8 @@ export default async function OrderCompletedTemplate({
   order,
   orderMetadata,
 }: OrderCompletedTemplateProps) {
+  console.log("🚀 ~ orderMetadata:", orderMetadata)
+  console.log("🚀 ~ order:", order)
   const cookies = await nextCookies()
   const isOnboarding = cookies.get("_medusa_onboarding")?.value === "true"
 
@@ -51,28 +53,40 @@ export default async function OrderCompletedTemplate({
           <Items order={order} />
           <CartTotals totals={order} />
           {(order as any)?.technician && (
-            <div>
-              <Text className="text-lg font-semibold text-primary mb-4">
-                Technician Details
-              </Text>
-              <div className="grid gap-4">
-                <DetailRow label="ID" value={`${(order as any).technician.id}`} />
-                <DetailRow label="Name" value={`${(order as any).technician.name}`} />
-                <DetailRow label="Email" value={`${(order as any).technician.email}`} />
-                <DetailRow
-                  label="Booking ID"
-                  value={`${orderMetadata.metadata?.nylasBookingId}`}
-                  className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded text-sm"
-                />
-                <div className="flex items-start gap-4">
-                  <span className="text-muted-foreground font-medium">Time Slot:</span>
-                  <div className="flex flex-col text-sm">
-                    <span>
-                      {format(new Date(Number(orderMetadata.metadata?.startTime) * 1000), "EEEE, MMMM d, yyyy")}
-                    </span>
-                    <span>
-                      {`${format(new Date(Number(orderMetadata.metadata?.startTime) * 1000), "h:mm a")} - ${format(new Date(Number(orderMetadata.metadata?.endTime) * 1000), "h:mm a")}`}
-                    </span>
+            <div className="bg-gray-50 rounded-lg shadow-sm">
+              <Heading level="h2" className="text-2xl font-semibold mb-6">
+                Technician Information
+              </Heading>
+              <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex-1">
+                  <Text className="txt-medium-plus text-ui-fg-base mb-2 font-semibold">
+                    Technician Details
+                  </Text>
+                  <div className="space-y-1">
+                    <div>
+                      <span className="font-semibold">ID:</span>{" "}
+                      <span className="text-ui-fg-subtle">{(order as any).technician.id}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold">Nylas Booking ID:</span>{" "}
+                      <span className="text-ui-fg-subtle">{(orderMetadata as any).metadata?.nylasBookingId}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold">Name:</span>{" "}
+                      <span className="text-ui-fg-subtle">{(order as any).technician.name}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold">Email:</span>{" "}
+                      <span className="text-ui-fg-subtle">{(orderMetadata as any).metadata?.technicianEmail}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold">TimeSlot:</span>{" "}
+                      <span className="text-ui-fg-subtle">
+                        {format(new Date(Number((orderMetadata as any).metadata?.startTime) * 1000), "dd/MM/yyyy HH:mm")}
+                        {" - "}
+                        {format(new Date(Number((orderMetadata as any).metadata?.endTime) * 1000), "dd/MM/yyyy HH:mm")}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
