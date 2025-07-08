@@ -74,11 +74,6 @@ export default function SchedularComponent({
 
   // Fetch availability and create booking slots
   const fetchAvailability = useCallback(async (selectedDate: Date) => {
-    // Skip fetching if duration hasn't changed and we already have slots
-    if (duration === prevDuration && bookingSlots.length > 0) {
-      return
-    }
-
     setLoading(true)
     try {
       const territories = await getTerritories()
@@ -171,8 +166,8 @@ export default function SchedularComponent({
       // Flatten and sort all slots
       const allSlots = Object.values(groups).flat()
       setBookingSlots(allSlots.sort((a, b) => {
-        const timeA = new Date(`${format(date, 'yyyy-MM-dd')} ${a.startTime}`).getTime()
-        const timeB = new Date(`${format(date, 'yyyy-MM-dd')} ${b.startTime}`).getTime()
+        const timeA = new Date(`${format(selectedDate, 'yyyy-MM-dd')} ${a.startTime}`).getTime()
+        const timeB = new Date(`${format(selectedDate, 'yyyy-MM-dd')} ${b.startTime}`).getTime()
         return timeA - timeB
       }))
       setPrevDuration(duration)
@@ -182,7 +177,7 @@ export default function SchedularComponent({
     } finally {
       setLoading(false)
     }
-  }, [cart.metadata?.territory_name, duration, prevDuration])
+  }, [cart.metadata?.territory_name, duration])
 
   // Group slots by period for display
   const groupedSlots = useMemo(() => {
@@ -227,8 +222,8 @@ export default function SchedularComponent({
   }, [selectedTime, selectedDate])
 
   useEffect(() => {
-    // Only fetch if date changes or duration changes
-    if (date && (duration !== prevDuration || bookingSlots.length === 0)) {
+    // Fetch if date changes, duration changes, or no slots exist
+    if (date) {
       fetchAvailability(date)
     }
   }, [date, duration, fetchAvailability])

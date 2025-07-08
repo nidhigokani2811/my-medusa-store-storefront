@@ -45,8 +45,18 @@ const Addresses = ({
   const pathname = usePathname()
   const [selectedTerritory, setSelectedTerritory] = useState<string>("")
 
-  // Fetch territories on component mount
-
+  // Add this useEffect to set the default territory value
+  useEffect(() => {
+    if (cart?.metadata?.territory_id && territories.length > 0) {
+      // Find the territory that matches the cart's territory_id
+      const defaultTerritory = territories.find(
+        (territory) => territory.id.toString() === cart.metadata.territory_id
+      )
+      if (defaultTerritory) {
+        setSelectedTerritory(defaultTerritory.id.toString())
+      }
+    }
+  }, [cart?.metadata?.territory_id, territories])
 
   const isOpen = searchParams.get("step") === "address"
 
