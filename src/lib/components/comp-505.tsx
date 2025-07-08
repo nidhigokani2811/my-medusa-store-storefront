@@ -30,7 +30,6 @@ type SelectedTime = {
   start: string
   end: string
   time: string
-  technicianEmail: string
   period: string
   type: BookingType
 } | null
@@ -207,7 +206,7 @@ export default function SchedularComponent({
         ? String(new Date(`${format(date, 'yyyy-MM-dd')} ${slot.endTime}`).getTime() / 1000)
         : String(new Date(`${format(date, 'yyyy-MM-dd')} ${slot.startTime}`).getTime() / 1000 + duration * 60),
       time: slot.endTime ? `${slot.startTime} - ${slot.endTime}` : slot.startTime,
-      technicianEmail: slot.technicianEmail[0],
+     
       period: slot.period,
       type: slot?.type || "flex"
     })
