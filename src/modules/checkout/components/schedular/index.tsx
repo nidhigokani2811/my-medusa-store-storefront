@@ -10,17 +10,61 @@ import Divider from "@modules/common/components/divider"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { format } from "date-fns"
+import { getTerritories } from "@lib/data/customer"
+
+interface TechnicianData {
+    email: string
+    name: string
+    booking: {
+        calendar_id: string
+    }
+    timezone: string
+    availability: {
+        open_hours: Array<{
+            end: string
+            days: number[]
+            start: string
+            timezone: string
+        }>
+        calendar_ids: string[]
+    }
+}
+
+interface Territory {
+    id: number
+    name: string
+    open_hours: TechnicianData[]
+    polygon: Array<any>
+    properties: {
+        id: string
+        name: string
+        color: string
+        opacity: number
+        timeZone: string
+    }
+    appearance: {
+        vacation: string
+    }
+    createdAt: string
+    updatedAt: string
+    type: string
+}
 
 type SchedularProps = {
     cart: HttpTypes.StoreCart
 }
 
-const Schedular: React.FC<SchedularProps> = ({
-    cart
-}) => {
+const Schedular: React.FC<SchedularProps> = ({ cart }) => {
     const [error, setError] = useState<string | null>(null)
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-    const [selectedTime, setSelectedTime] = useState<{ start: string, end: string, time: string, technicianEmail: string } | null>(null)
+    const [selectedTime, setSelectedTime] = useState<{
+        start: string
+        end: string
+        time: string
+        technicianEmail: string
+        period: string
+        type: "flex" | "exact"
+    } | null>(null)
 
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -28,21 +72,150 @@ const Schedular: React.FC<SchedularProps> = ({
 
     const isOpen = searchParams.get("step") === "schedular"
 
-    const handleSelectionChange = (date: Date | null, time: { start: string, end: string, time: string, technicianEmail: string } | null) => {
-        setSelectedDate(date)
-        setSelectedTime(time)
+    const handleSelectionChange = (
+        date: Date | null,
+        time: {
+            start: string
+            end: string
+            time: string
+            technicianEmail: string
+            period: string
+            type: "flex" | "exact"
+        } | null
+    ) => {
+        if (date && (!selectedDate || date.getTime() !== selectedDate.getTime())) {
+            setSelectedDate(date)
+        }
+
+        if (time && (!selectedTime ||
+            time.start !== selectedTime.start ||
+            time.end !== selectedTime.end ||
+            time.technicianEmail !== selectedTime.technicianEmail)) {
+            setSelectedTime(time)
+        }
     }
 
+
     const handleSubmit = async () => {
-        if (selectedDate && selectedTime) {
-            await updateCart({
-                metadata: {
-                    startTime: selectedTime.start,
-                    endTime: selectedTime.end,
-                    technicianEmail: selectedTime.technicianEmail
+        const territories = await getTerritories()
+
+        if (!selectedDate || !selectedTime) {
+            setError("Please select a date and time slot.")
+            return
+        }
+
+        try {
+            const visits: Record<string, any> = {}
+            const fleet: Record<string, any> = {}
+
+            // Create visits
+            if (cart.items && cart.items.length > 0) {
+                cart.items.forEach((item, index) => {
+                    visits[`order_item_${index + 1}`] = {
+                        location: {
+                            name: cart.shipping_address?.address_1,
+                            lat: Number(cart.metadata?.latitude),
+                            lng: Number(cart.metadata?.longitude),
+                        },
+                        start: selectedTime ? format(new Date(Number(selectedTime.start) * 1000), "HH:mm") : "",
+                        end: selectedTime ? format(new Date(Number(selectedTime.end) * 1000), "HH:mm") : "",
+                        duration: Number(cart.metadata?.duration),
+                    }
+                })
+            } else {
+                visits[`current_order`] = {
+                    location: {
+                        name: cart.shipping_address?.address_1,
+                        lat: Number(cart.metadata?.latitude),
+                        lng: Number(cart.metadata?.longitude),
+                    },
+                    start: selectedTime ? format(new Date(Number(selectedTime.start) * 1000), "HH:mm") : "",
+                    end: selectedTime ? format(new Date(Number(selectedTime.end) * 1000), "HH:mm") : "",
+                    duration: Number(cart.metadata?.duration),
                 }
+            }
+
+            const selectedDay = selectedDate.getDay()
+
+            // Find the selected territory based on coordinates
+            const selectedTerritory = territories.find((territory: Territory) => {
+                return territory.name === cart.metadata?.territory_name
             })
-            router.push(pathname + "?step=delivery", { scroll: false })
+
+            if (selectedTerritory && selectedTerritory.open_hours) {
+                selectedTerritory.open_hours.forEach((technicianData: TechnicianData) => {
+                    const hoursForSelectedDay = technicianData.availability.open_hours.filter(
+                        (hours) => hours.days.includes(selectedDay)
+                    )
+
+                    if (hoursForSelectedDay.length > 0) {
+                        const fleetKey = `${technicianData.name}_${selectedTerritory.name}`
+                        fleet[fleetKey] = {
+                            start_location: {
+                                id: "depot",
+                                name: "Service Depot",
+                                lat: 28.732488,
+                                lng: -81.364498,
+                            },
+                            end_location: {
+                                id: "depot",
+                                name: "Service Depot",
+                                lat: 28.732488,
+                                lng: -81.364498,
+                            },
+                            shift_start: hoursForSelectedDay[0].start,
+                            shift_end: hoursForSelectedDay[0].end,
+                        }
+                    }
+                })
+            }
+
+            console.log("Routific API Request Body:", { visits, fleet })
+
+            // Call Routific API with real data
+            const routificResponse = await fetch("http://api.routific.com/v1/vrp", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.NEXT_PUBLIC_ROUTIFIC_TOKEN}`,
+                },
+                body: JSON.stringify({
+                    visits,
+                    fleet,
+                }),
+            })
+
+            const routificData = await routificResponse.json()
+            console.log("Routific API Response:", routificData)
+
+
+            if (!routificResponse.ok) {
+                throw new Error(
+                    `Routific API error: ${routificData.message || "Unknown error"}`
+                )
+            }
+
+            if (routificData.unserved) {
+                setError("No time slots available for the selected date and time.")
+                return
+            }
+
+
+            if (selectedTime?.technicianEmail && selectedTime?.start && selectedTime?.end) {
+                await updateCart({
+                    metadata: {
+                        technicianEmail: selectedTime.technicianEmail,
+                        startTime: selectedTime.start,
+                        endTime: selectedTime.end,
+                        territory: selectedTerritory?.name,
+                        bookingType: selectedTime?.type
+                    },
+                })
+                router.push(pathname + "?step=delivery", { scroll: false })
+            }
+        } catch (error) {
+            console.error("Error:", error)
+            setError("Failed to process request. Please try again.")
         }
     }
 
@@ -51,17 +224,34 @@ const Schedular: React.FC<SchedularProps> = ({
     }
 
     useEffect(() => {
-        if (cart.metadata?.startTime && cart.metadata?.endTime) {
-            setSelectedDate(new Date(Number(cart.metadata?.startTime) * 1000))
-            setSelectedTime({
+        if (cart.metadata?.startTime && cart.metadata?.endTime && isOpen) {
+            const newDate = new Date(Number(cart.metadata?.startTime) * 1000)
+            const newTime = {
                 start: `${cart.metadata?.startTime}`,
                 end: `${cart.metadata?.endTime}`,
-                time: `${format(new Date(Number(cart.metadata?.startTime) * 1000), 'HH:mm')} - ${format(new Date(Number(cart.metadata?.endTime) * 1000), 'HH:mm')}`,
-                technicianEmail: `${cart.metadata?.technicianEmail}`
-            })
+                time: `${format(
+                    new Date(Number(cart.metadata?.startTime) * 1000),
+                    "HH:mm"
+                )} - ${format(
+                    new Date(Number(cart.metadata?.endTime) * 1000),
+                    "HH:mm"
+                )}`,
+                technicianEmail: `${cart.metadata?.technicianEmail}`,
+                period: `${cart.metadata?.period}`,
+                type: cart.metadata?.bookingType as "flex" | "exact" || "flex"
+            }
+
+            if (!selectedDate || newDate.getTime() !== selectedDate.getTime()) {
+                setSelectedDate(newDate)
+            }
+            if (!selectedTime ||
+                newTime.start !== selectedTime.start ||
+                newTime.end !== selectedTime.end) {
+                setSelectedTime(newTime)
+            }
         }
         setError(null)
-    }, [isOpen])
+    }, [isOpen, cart.metadata])
 
     return (
         <div className="bg-white">
@@ -105,7 +295,13 @@ const Schedular: React.FC<SchedularProps> = ({
                         </div>
                         <div data-testid="delivery-options-container">
                             <div className="pb-8 md:pt-0 pt-2">
-                                <SchedularComponent onSelectionChange={handleSelectionChange} selectedTime={selectedTime} selectedDate={selectedDate} cartId={cart.id} cart={cart} />
+                                <SchedularComponent
+                                    onSelectionChange={handleSelectionChange}
+                                    selectedTime={selectedTime}
+                                    selectedDate={selectedDate}
+                                    cartId={cart.id}
+                                    cart={cart}
+                                />
                             </div>
                         </div>
                     </div>
@@ -129,13 +325,21 @@ const Schedular: React.FC<SchedularProps> = ({
             ) : (
                 <div>
                     <div className="text-small-regular">
-                        {cart && (cart.metadata?.startTime && cart.metadata?.endTime) ? (
+                        {cart && cart.metadata?.startTime && cart.metadata?.endTime ? (
                             <div className="flex flex-col w-1/3">
                                 <Text className="txt-medium-plus text-ui-fg-base mb-1">
                                     Scheduled Time
                                 </Text>
                                 <Text className="txt-medium text-ui-fg-subtle">
-                                    {format(new Date(Number(cart.metadata?.startTime) * 1000), 'dd/MM/yyyy HH:mm')} - {format(new Date(Number(cart.metadata?.endTime) * 1000), 'dd/MM/yyyy HH:mm')}
+                                    {format(
+                                        new Date(Number(cart.metadata?.startTime) * 1000),
+                                        "dd/MM/yyyy HH:mm"
+                                    )}{" "}
+                                    -{" "}
+                                    {format(
+                                        new Date(Number(cart.metadata?.endTime) * 1000),
+                                        "dd/MM/yyyy HH:mm"
+                                    )}
                                 </Text>
                             </div>
                         ) : (

@@ -31,6 +31,7 @@ const ShippingAddress = ({
     email: cart?.email || "",
     latitude: cart?.metadata?.latitude || "",
     longitude: cart?.metadata?.longitude || "",
+    duration: cart?.metadata?.duration || "",
   })
 
   const countriesInRegion = useMemo(
@@ -65,6 +66,7 @@ const ShippingAddress = ({
         "shipping_address.phone": address?.phone || "",
         latitude: cart?.metadata?.latitude || "",
         longitude: cart?.metadata?.longitude || "",
+        duration: cart?.metadata?.duration || "",
       }))
 
     email &&
@@ -235,10 +237,22 @@ const ShippingAddress = ({
           title="Enter a valid longitude."
           autoComplete="longitude"
           value={formData.longitude}
+          required
           onChange={handleChange}
           data-testid="shipping-longitude-input"
         />
       </div>
+      <Input
+        label="duration"
+        name="duration"
+        type="number"
+        required
+        title="Enter a valid duration."
+        autoComplete="duration"
+        value={formData.duration}
+        onChange={handleChange}
+        data-testid="shipping-duration-input"
+      />
     </>
   )
 }

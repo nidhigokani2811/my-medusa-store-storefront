@@ -380,6 +380,7 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
         territory_name: formData.get("territory_name"),
         latitude: formData.get("latitude"),
         longitude: formData.get("longitude"),
+        duration: formData.get("duration"),
       },
     })
   } catch (e: any) {

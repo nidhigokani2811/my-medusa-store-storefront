@@ -185,6 +185,9 @@ const Addresses = ({
                     <Text className="txt-medium text-ui-fg-subtle">
                       {"Longitude: " + (cart?.metadata?.longitude != null ? String(cart.metadata.longitude) : "No longitude")}
                     </Text>
+                    <Text className="txt-medium text-ui-fg-subtle">
+                      {"Duration: " + (cart?.metadata?.duration != null ? String(cart.metadata.duration) : "No duration")}
+                    </Text>
                   </div>
 
                   <div
