@@ -9,8 +9,9 @@ import ErrorMessage from "@modules/checkout/components/error-message"
 import Divider from "@modules/common/components/divider"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { format } from "date-fns"
+import { format, getUnixTime } from "date-fns"
 import { getTerritories } from "@lib/data/customer"
+import { getTodayBooking } from "@lib/data/orders"
 
 interface TechnicianData {
   email: string
@@ -104,10 +105,34 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
     }
 
     try {
+      //unix of selectedDate start and end
+      const todayBooking = await getTodayBooking(
+        getUnixTime(selectedDate.setHours(0, 0, 0, 0)).toString(),
+        getUnixTime(selectedDate.setHours(23, 59, 59, 999)).toString()
+      )
+
       const visits: Record<string, any> = {}
       const fleet: Record<string, any> = {}
 
-      // Create visits
+      if (todayBooking && todayBooking.length > 0) {
+        todayBooking.forEach((booking: any) => {
+          visits[`${booking.order.id}`] = {
+            location: {
+              name: `${booking.order.shipping_address?.id}`,
+              lat: Number(booking?.latitude) || 0,
+              lng: Number(booking?.longitude) || 0,
+            },
+            start: booking.start_time
+              ? format(new Date(Number(booking.start_time) * 1000), "HH:mm")
+              : "",
+            end: booking.end_time
+              ? format(new Date(Number(booking.end_time) * 1000), "HH:mm")
+              : "",
+            duration: booking.duration,
+          }
+        })
+      }
+
       if (cart.items && cart.items.length > 0) {
         cart.items.forEach((item, index) => {
           visits[`order_item_${index + 1}`] = {
@@ -125,21 +150,6 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
             duration: Number(cart.metadata?.duration),
           }
         })
-      } else {
-        visits[`current_order`] = {
-          location: {
-            name: cart.shipping_address?.address_1,
-            lat: Number(cart.metadata?.latitude),
-            lng: Number(cart.metadata?.longitude),
-          },
-          start: selectedTime
-            ? format(new Date(Number(selectedTime.start) * 1000), "HH:mm")
-            : "",
-          end: selectedTime
-            ? format(new Date(Number(selectedTime.end) * 1000), "HH:mm")
-            : "",
-          duration: Number(cart.metadata?.duration),
-        }
       }
 
       const selectedDay = selectedDate.getDay()

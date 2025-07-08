@@ -43,8 +43,7 @@ export const retrieveOrderMetadata = async (id: string) => {
     .fetch<HttpTypes.StoreOrderResponse>(`/store/orders/${id}`, {
       method: "GET",
       query: {
-        fields:
-          "metadata",
+        fields: "metadata",
       },
       headers,
     })
@@ -134,4 +133,24 @@ export const declineTransferRequest = async (id: string, token: string) => {
     .declineTransfer(id, { token }, {}, headers)
     .then(({ order }) => ({ success: true, error: null, order }))
     .catch((err) => ({ success: false, error: err.message, order: null }))
+}
+
+export const getTodayBooking = async (startDate: string, endDate: string) => {
+  const response = await fetch(
+    `${process.env.MEDUSA_BACKEND_URL}/store/booking?start_time=${startDate}&end_time=${endDate}`,
+    {
+      method: "GET",
+      headers: {
+        ...(await getAuthHeaders()),
+        ...(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY && {
+          "x-publishable-api-key":
+            process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY,
+        }),
+        "Content-Type": "application/json",
+      },
+    }
+  )
+  const { orders } = await response.json()
+
+  return orders
 }
