@@ -135,9 +135,11 @@ export const declineTransferRequest = async (id: string, token: string) => {
     .catch((err) => ({ success: false, error: err.message, order: null }))
 }
 
-export const getTodayBooking = async (startDate: string, endDate: string) => {
+export const getTodayBooking = async (date: Date) => {
   const response = await fetch(
-    `${process.env.MEDUSA_BACKEND_URL}/store/booking?start_time=${startDate}&end_time=${endDate}`,
+    `${
+      process.env.MEDUSA_BACKEND_URL
+    }/store/booking?date=${date.toISOString()}`,
     {
       method: "GET",
       headers: {

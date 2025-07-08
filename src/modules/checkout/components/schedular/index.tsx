@@ -105,11 +105,7 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
     }
 
     try {
-      //unix of selectedDate start and end
-      const todayBooking = await getTodayBooking(
-        getUnixTime(selectedDate.setHours(0, 0, 0, 0)).toString(),
-        getUnixTime(selectedDate.setHours(23, 59, 59, 999)).toString()
-      )
+      const todayBooking = await getTodayBooking(selectedDate)
 
       const visits: Record<string, any> = {}
       const fleet: Record<string, any> = {}
