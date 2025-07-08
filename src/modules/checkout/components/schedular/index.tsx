@@ -61,7 +61,6 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
     start: string
     end: string
     time: string
-    technicianEmail: string
     period: string
     type: "flex" | "exact"
   } | null>(null)
@@ -78,7 +77,6 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
       start: string
       end: string
       time: string
-      technicianEmail: string
       period: string
       type: "flex" | "exact"
     } | null
@@ -91,8 +89,7 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
       time &&
       (!selectedTime ||
         time.start !== selectedTime.start ||
-        time.end !== selectedTime.end ||
-        time.technicianEmail !== selectedTime.technicianEmail)
+        time.end !== selectedTime.end)
     ) {
       setSelectedTime(time)
     }
@@ -212,14 +209,9 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
         return
       }
 
-      if (
-        selectedTime?.technicianEmail &&
-        selectedTime?.start &&
-        selectedTime?.end
-      ) {
+      if (selectedTime?.start && selectedTime?.end) {
         await updateCart({
           metadata: {
-            technicianEmail: selectedTime.technicianEmail,
             startTime: selectedTime.start,
             endTime: selectedTime.end,
             territory: selectedTerritory?.name,
@@ -251,7 +243,6 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
           new Date(Number(cart.metadata?.endTime) * 1000),
           "HH:mm"
         )}`,
-        technicianEmail: `${cart.metadata?.technicianEmail}`,
         period: `${cart.metadata?.period}`,
         type: (cart.metadata?.bookingType as "flex" | "exact") || "flex",
       }
