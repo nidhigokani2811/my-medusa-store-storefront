@@ -220,7 +220,6 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
           metadata: {
             startTime: selectedTime.start,
             endTime: selectedTime.end,
-            territory: selectedTerritory?.name,
             bookingType: selectedTime?.type,
           },
         })
