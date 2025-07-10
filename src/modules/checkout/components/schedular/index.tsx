@@ -110,6 +110,15 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
       const visits: Record<string, any> = {}
       const fleet: Record<string, any> = {}
 
+      // Track all territory names that have orders
+      const territoriesWithOrders = new Set<string>()
+
+      // Add current cart's territory
+      if (cart.metadata?.territory_name) {
+        territoriesWithOrders.add(cart.metadata.territory_name as string)
+      }
+
+      // Process existing bookings
       if (todayBooking && todayBooking.length > 0) {
         todayBooking.forEach((booking: any) => {
           visits[`${booking.order.id}`] = {
@@ -126,9 +135,16 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
               : "",
             duration: booking.duration,
           }
+
+          // Get territory name for this order from the booking response
+          const orderTerritoryName = booking.order.metadata?.territory_name
+          if (orderTerritoryName) {
+            territoriesWithOrders.add(orderTerritoryName)
+          }
         })
       }
 
+      // Add current cart items
       if (cart.items && cart.items.length > 0) {
         cart.items.forEach((item, index) => {
           visits[`order_item_${index + 1}`] = {
@@ -149,41 +165,42 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
       }
 
       const selectedDay = selectedDate.getDay()
+      // Build fleet data for ALL territories that have orders
+      for (const territoryName of Array.from(territoriesWithOrders)) {
+        const selectedTerritory = territories.find((territory: Territory) => {
+          return territory.name === territoryName
+        })
 
-      // Find the selected territory based on coordinates
-      const selectedTerritory = territories.find((territory: Territory) => {
-        return territory.name === cart.metadata?.territory_name
-      })
+        if (selectedTerritory && selectedTerritory.open_hours) {
+          selectedTerritory.open_hours.forEach(
+            (technicianData: TechnicianData) => {
+              const hoursForSelectedDay =
+                technicianData.availability.open_hours.filter((hours) =>
+                  hours.days.includes(selectedDay)
+                )
 
-      if (selectedTerritory && selectedTerritory.open_hours) {
-        selectedTerritory.open_hours.forEach(
-          (technicianData: TechnicianData) => {
-            const hoursForSelectedDay =
-              technicianData.availability.open_hours.filter((hours) =>
-                hours.days.includes(selectedDay)
-              )
-
-            if (hoursForSelectedDay.length > 0) {
-              const fleetKey = `${technicianData.name}_${selectedTerritory.name}`
-              fleet[fleetKey] = {
-                start_location: {
-                  id: "depot",
-                  name: "Service Depot",
-                  lat: 28.732488,
-                  lng: -81.364498,
-                },
-                end_location: {
-                  id: "depot",
-                  name: "Service Depot",
-                  lat: 28.732488,
-                  lng: -81.364498,
-                },
-                shift_start: hoursForSelectedDay[0].start,
-                shift_end: hoursForSelectedDay[0].end,
+              if (hoursForSelectedDay.length > 0) {
+                const fleetKey = `${technicianData.name}_${selectedTerritory.name}`
+                fleet[fleetKey] = {
+                  start_location: {
+                    id: "depot",
+                    name: "Service Depot",
+                    lat: 28.732488,
+                    lng: -81.364498,
+                  },
+                  end_location: {
+                    id: "depot",
+                    name: "Service Depot",
+                    lat: 28.732488,
+                    lng: -81.364498,
+                  },
+                  shift_start: hoursForSelectedDay[0].start,
+                  shift_end: hoursForSelectedDay[0].end,
+                }
               }
             }
-          }
-        )
+          )
+        }
       }
 
       console.log("Routific API Request Body:", { visits, fleet })
