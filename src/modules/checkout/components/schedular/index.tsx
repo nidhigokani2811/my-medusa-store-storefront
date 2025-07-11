@@ -110,17 +110,23 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
       const visits: Record<string, any> = {}
       const fleet: Record<string, any> = {}
 
-      // Track all territory names that have orders
-      const territoriesWithOrders = new Set<string>()
+      // Get current cart's territory
+      const currentCartTerritory = cart.metadata?.territory_name as string
 
-      // Add current cart's territory
-      if (cart.metadata?.territory_name) {
-        territoriesWithOrders.add(cart.metadata.territory_name as string)
+      if (!currentCartTerritory) {
+        setError("Territory information not found for current cart.")
+        return
       }
 
-      // Process existing bookings
-      if (todayBooking && todayBooking.length > 0) {
-        todayBooking.forEach((booking: any) => {
+      // Filter today's bookings to only include orders from the same territory
+      const sameTerritoryBookings = todayBooking?.filter((booking: any) => {
+        const orderTerritoryName = booking.order.metadata?.territory_name
+        return orderTerritoryName === currentCartTerritory
+      }) || []
+
+      // Process existing bookings from the same territory
+      if (sameTerritoryBookings.length > 0) {
+        sameTerritoryBookings.forEach((booking: any) => {
           visits[`${booking.order.id}`] = {
             location: {
               name: `${booking.order.shipping_address?.id}`,
@@ -134,12 +140,6 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
               ? format(new Date(Number(booking.end_time) * 1000), "HH:mm")
               : "",
             duration: booking.duration,
-          }
-
-          // Get territory name for this order from the booking response
-          const orderTerritoryName = booking.order.metadata?.territory_name
-          if (orderTerritoryName) {
-            territoriesWithOrders.add(orderTerritoryName)
           }
         })
       }
@@ -164,48 +164,51 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
         })
       }
 
-      const selectedDay = selectedDate.getDay()
-      // Build fleet data for ALL territories that have orders
-      for (const territoryName of Array.from(territoriesWithOrders)) {
-        const selectedTerritory = territories.find((territory: Territory) => {
-          return territory.name === territoryName
-        })
+      // Find the territory configuration for the current cart's territory
+      const selectedTerritory = territories.find((territory: Territory) => {
+        return territory.name === currentCartTerritory
+      })
 
-        if (selectedTerritory && selectedTerritory.open_hours) {
-          selectedTerritory.open_hours.forEach(
-            (technicianData: TechnicianData) => {
-              const hoursForSelectedDay =
-                technicianData.availability.open_hours.filter((hours) =>
-                  hours.days.includes(selectedDay)
-                )
-
-              if (hoursForSelectedDay.length > 0) {
-                const fleetKey = `${technicianData.name}_${selectedTerritory.name}`
-                fleet[fleetKey] = {
-                  start_location: {
-                    id: "depot",
-                    name: "Service Depot",
-                    lat: 28.732488,
-                    lng: -81.364498,
-                  },
-                  end_location: {
-                    id: "depot",
-                    name: "Service Depot",
-                    lat: 28.732488,
-                    lng: -81.364498,
-                  },
-                  shift_start: hoursForSelectedDay[0].start,
-                  shift_end: hoursForSelectedDay[0].end,
-                }
-              }
-            }
-          )
-        }
+      if (!selectedTerritory) {
+        setError("Territory configuration not found.")
+        return
       }
 
-      console.log("Routific API Request Body:", { visits, fleet })
+      const selectedDay = selectedDate.getDay()
 
-      // Call Routific API with real data
+      // Create fleet configurations only for technicians available in this territory
+      if (selectedTerritory.open_hours && selectedTerritory.open_hours.length > 0) {
+        selectedTerritory.open_hours.forEach((technicianData: TechnicianData) => {
+          // Check if technician is available for the selected day
+          const hoursForSelectedDay = technicianData.availability.open_hours.filter((hours) =>
+            hours.days.includes(selectedDay)
+          )
+
+          if (hoursForSelectedDay.length > 0) {
+            const fleetKey = `${technicianData.name}_${selectedTerritory.name}`
+            fleet[fleetKey] = {
+              start_location: {
+                id: "depot",
+                name: "Service Depot",
+                lat: 28.732488,
+                lng: -81.364498,
+              },
+              end_location: {
+                id: "depot",
+                name: "Service Depot",
+                lat: 28.732488,
+                lng: -81.364498,
+              },
+              shift_start: hoursForSelectedDay[0].start,
+              shift_end: hoursForSelectedDay[0].end,
+            }
+          }
+        })
+      }
+
+      console.log("Routific API Request Body:",)
+      console.dir({ visits, fleet }, { depth: null })
+      // Call Routific API with filtered data
       const routificResponse = await fetch("https://api.routific.com/v1/vrp", {
         method: "POST",
         headers: {
@@ -219,7 +222,8 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
       })
 
       const routificData = await routificResponse.json()
-      console.log("Routific API Response:", routificData)
+      console.log("Routific API Response:",)
+      console.dir(routificData, { depth: null })
 
       if (!routificResponse.ok) {
         throw new Error(
