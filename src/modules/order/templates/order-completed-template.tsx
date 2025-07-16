@@ -1,6 +1,5 @@
 import { Heading, Text, Divider } from "@medusajs/ui"
 import { cookies as nextCookies } from "next/headers"
-
 import CartTotals from "@modules/common/components/cart-totals"
 import Help from "@modules/order/components/help"
 import Items from "@modules/order/components/items"
@@ -16,6 +15,13 @@ type OrderCompletedTemplateProps = {
   orderMetadata: HttpTypes.StoreOrder
 }
 
+const DetailRow = ({ label, value, className = "" }: { label: string; value: string | number; className?: string }) => (
+  <div className="flex items-center gap-4">
+    <span className="text-muted-foreground font-medium">{label}:</span>
+    <span className={className}>{value}</span>
+  </div>
+)
+
 export default async function OrderCompletedTemplate({
   order,
   orderMetadata,
@@ -23,7 +29,6 @@ export default async function OrderCompletedTemplate({
   console.log("🚀 ~ orderMetadata:", orderMetadata)
   console.log("🚀 ~ order:", order)
   const cookies = await nextCookies()
-
   const isOnboarding = cookies.get("_medusa_onboarding")?.value === "true"
 
   return (
@@ -85,9 +90,10 @@ export default async function OrderCompletedTemplate({
                   </div>
                 </div>
               </div>
-              <Divider className="mt-8" />
             </div>
           )}
+
+          <Divider className="mt-10" />
           <ShippingDetails order={order} />
           <PaymentDetails order={order} />
           <Help />
