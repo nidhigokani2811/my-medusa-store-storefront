@@ -87,6 +87,10 @@ export default function SchedularComponent({
       }
 
       territory.open_hours.forEach((tech: any) => {
+        if (!tech.availability || !Array.isArray(tech.availability.open_hours)) {
+          // Optionally log or skip this tech if data is missing
+          return
+        }
         tech.availability.open_hours
           .filter((hour: any) => hour.days.includes(dayOfWeek) && !isDateExcluded(selectedDate, hour.exdates))
           .forEach((hour: any) => {
@@ -169,6 +173,8 @@ export default function SchedularComponent({
         const timeB = new Date(`${format(selectedDate, 'yyyy-MM-dd')} ${b.startTime}`).getTime()
         return timeA - timeB
       }))
+      console.log("setBookingSlots:::::");
+      console.dir(bookingSlots, { depth: null });
       setPrevDuration(duration)
     } catch (error) {
       console.error("Error fetching availability:", error)
@@ -206,7 +212,6 @@ export default function SchedularComponent({
         ? String(new Date(`${format(date, 'yyyy-MM-dd')} ${slot.endTime}`).getTime() / 1000)
         : String(new Date(`${format(date, 'yyyy-MM-dd')} ${slot.startTime}`).getTime() / 1000 + duration * 60),
       time: slot.endTime ? `${slot.startTime} - ${slot.endTime}` : slot.startTime,
-     
       period: slot.period,
       type: slot?.type || "flex"
     })
