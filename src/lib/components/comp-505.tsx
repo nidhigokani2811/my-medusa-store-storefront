@@ -124,7 +124,7 @@ export default function SchedularComponent({
 
               // Add exact bookings for this group with 30-minute buffer
               let currentSlot = new Date(groupStartTime)
-              const bufferTime = 30 * 60 * 1000 // 30 minutes in milliseconds
+              // cons = 30 * 60 * 1000 // 30 minutes in milliseconds
 
               while (currentSlot.getTime() + (duration * 60 * 1000) <= groupEndTime.getTime()) {
                 const exactTime = format(currentSlot, "HH:mm")
@@ -141,7 +141,7 @@ export default function SchedularComponent({
                   })
                 }
                 // Move to next slot: current duration + buffer time
-                currentSlot = new Date(currentSlot.getTime() + (duration * 60 * 1000) + bufferTime)
+                currentSlot = new Date(currentSlot.getTime() + (duration * 60 * 1000))
               }
             }
 

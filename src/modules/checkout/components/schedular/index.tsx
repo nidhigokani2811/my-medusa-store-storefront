@@ -180,7 +180,10 @@ const Schedular: React.FC<SchedularProps> = ({ cart }) => {
       if (selectedTerritory.open_hours && selectedTerritory.open_hours.length > 0) {
         selectedTerritory.open_hours.forEach((technicianData: TechnicianData) => {
           // Check if technician is available for the selected day
-          const hoursForSelectedDay = technicianData.availability.open_hours.filter((hours) =>
+          const openHours = technicianData.availability?.open_hours
+          if (!openHours) return // skip if undefined
+
+          const hoursForSelectedDay = openHours.filter((hours) =>
             hours.days.includes(selectedDay)
           )
 
